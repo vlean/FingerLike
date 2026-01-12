@@ -61,7 +61,7 @@ void FlutterWindow::RegisterScreenOverlayMethodHandler() {
         if (call.method_name() == "showOverlay") {
           auto* args = std::get_if<flutter::EncodableMap>(call.arguments());
           if (args) {
-            auto markers_it = args->find(flutter::EncodableValue("markers"));
+            auto markers_it = args->find(flutter::EncodableValue(std::string("markers")));
             if (markers_it != args->end()) {
               auto* markers_list = std::get_if<flutter::EncodableList>(&markers_it->second);
               if (markers_list) {
@@ -69,9 +69,9 @@ void FlutterWindow::RegisterScreenOverlayMethodHandler() {
                 for (const auto& marker : *markers_list) {
                   auto* marker_map = std::get_if<flutter::EncodableMap>(&marker);
                   if (marker_map) {
-                    auto x_it = marker_map->find(flutter::EncodableValue("x"));
-                    auto y_it = marker_map->find(flutter::EncodableValue("y"));
-                    auto name_it = marker_map->find(flutter::EncodableValue("name"));
+                    auto x_it = marker_map->find(flutter::EncodableValue(std::string("x")));
+                    auto y_it = marker_map->find(flutter::EncodableValue(std::string("y")));
+                    auto name_it = marker_map->find(flutter::EncodableValue(std::string("name")));
 
                     if (x_it != marker_map->end() && y_it != marker_map->end() &&
                         name_it != marker_map->end()) {
@@ -83,26 +83,26 @@ void FlutterWindow::RegisterScreenOverlayMethodHandler() {
                   }
                 }
                 ShowScreenOverlay(markers);
-                result(flutter::EncodableValue(true));
+                result->Success();
                 return;
               }
             }
           }
-          result(flutter::EncodableValue(false));
+          result->Success(false);
         } else if (call.method_name() == "hideOverlay") {
           HideScreenOverlay();
-          result(flutter::EncodableValue(true));
+          result->Success();
         } else if (call.method_name() == "getScreenSize") {
           int screen_width = GetSystemMetrics(SM_CXSCREEN);
           int screen_height = GetSystemMetrics(SM_CYSCREEN);
 
           flutter::EncodableMap size_map = {
-            {flutter::EncodableValue("width"), flutter::EncodableValue(screen_width)},
-            {flutter::EncodableValue("height"), flutter::EncodableValue(screen_height)},
+            {flutter::EncodableValue(std::string("width")), flutter::EncodableValue(screen_width)},
+            {flutter::EncodableValue(std::string("height")), flutter::EncodableValue(screen_height)},
           };
-          result(flutter::EncodableValue(size_map));
+          result->Success(size_map);
         } else {
-          result(FlutterError("unknown_method", "Unknown method", nullptr));
+          result->NotImplemented();
         }
       });
 }
