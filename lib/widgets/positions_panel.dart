@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/position_provider.dart';
 import '../models/position.dart';
@@ -724,19 +725,33 @@ class _AllPositionsOverlayDialogState extends State<AllPositionsOverlayDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.black.withOpacity(0.3),
-      child: Center(
-        child: _ControlPanel(
-          positionCount: widget.positions.length,
-          onClose: () async {
-            await _hideOverlay();
-            if (mounted) Navigator.pop(context);
-          },
+    return KeyboardListener(
+      focusNode: FocusNode(),
+      autofocus: true,
+      onKeyEvent: (KeyEvent event) {
+        if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.escape) {
+          onClose();
+        }
+      },
+      child: Material(
+        color: Colors.black.withOpacity(0.3),
+        child: GestureDetector(
+          onDoubleTap: onClose,
+          child: Center(
+            child: _ControlPanel(
+              positionCount: widget.positions.length,
+              onClose: onClose,
+            ),
+          ),
         ),
       ),
     );
   }
+
+  VoidCallback get onClose => () async {
+    await _hideOverlay();
+    if (mounted) Navigator.pop(context);
+  };
 }
 
 // 控制面板

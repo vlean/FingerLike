@@ -207,12 +207,19 @@ void FlutterWindow::ShowScreenOverlay(const std::vector<PositionMarker>& markers
         }
         case WM_ERASEBKGND:
           return 1;
-        case WM_DESTROY:
-          PostQuitMessage(0);
-          return 0;
+        case WM_KEYDOWN:
+          // Close on ESC key
+          if (wParam == VK_ESCAPE) {
+            DestroyWindow(hwnd);
+            return 0;
+          }
+          break;
         case WM_LBUTTONDBLCLK:
           // Close on double-click
           DestroyWindow(hwnd);
+          return 0;
+        case WM_DESTROY:
+          PostQuitMessage(0);
           return 0;
       }
       return DefWindowProc(hwnd, msg, wParam, lParam);
