@@ -186,7 +186,7 @@ void FlutterWindow::ShowScreenOverlay(const std::vector<PositionMarker>& markers
             DeleteObject(hCirclePen);
 
             // Draw name label background
-            int text_length = marker.name.length();
+            int text_length = static_cast<int>(marker.name.length());
             SIZE text_size;
             GetTextExtentPoint32A(hdc, marker.name.c_str(), text_length, &text_size);
 
