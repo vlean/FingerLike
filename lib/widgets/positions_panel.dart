@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/position_provider.dart';
 import '../models/position.dart';
 import '../services/mouse_service.dart';
+import '../services/screen_service.dart';
 import '../l10n/app_localizations.dart';
 
 class PositionsPanel extends StatefulWidget {
@@ -42,6 +43,12 @@ class _PositionsPanelState extends State<PositionsPanel> {
               ),
               Row(
                 children: [
+                  ElevatedButton.icon(
+                    onPressed: () => _showAllPositionsOnScreen(context),
+                    icon: const Icon(Icons.visibility),
+                    label: const Text('显示所有位置'),
+                  ),
+                  const SizedBox(width: 8),
                   ElevatedButton.icon(
                     onPressed: () => _showAddPositionDialog(context),
                     icon: const Icon(Icons.add),
@@ -125,6 +132,22 @@ class _PositionsPanelState extends State<PositionsPanel> {
     showDialog(
       context: context,
       builder: (context) => PositionPreviewDialog(position: position),
+    );
+  }
+
+  void _showAllPositionsOnScreen(BuildContext context) {
+    final provider = Provider.of<PositionProvider>(context, listen: false);
+    if (provider.positions.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('暂无位置可显示')),
+      );
+      return;
+    }
+    showDialog(
+      context: context,
+      builder: (context) => AllPositionsOverlayDialog(
+        positions: provider.positions,
+      ),
     );
   }
 
@@ -401,10 +424,12 @@ class _PositionEditDialogState extends State<PositionEditDialog> {
                     child: TextFormField(
                       controller: _xController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'X',
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
+                        hintText: '按回车获取当前位置',
                       ),
+                      onFieldSubmitted: (_) => _pickCurrentPosition(),
                       validator: (value) {
                         if (value == null ||
                             value.trim().isEmpty ||
@@ -420,10 +445,12 @@ class _PositionEditDialogState extends State<PositionEditDialog> {
                     child: TextFormField(
                       controller: _yController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Y',
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
+                        hintText: '按回车获取当前位置',
                       ),
+                      onFieldSubmitted: (_) => _pickCurrentPosition(),
                       validator: (value) {
                         if (value == null ||
                             value.trim().isEmpty ||
@@ -639,4 +666,155 @@ class _PositionPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// 所有位置屏幕覆盖层对话框
+class AllPositionsOverlayDialog extends StatefulWidget {
+  final List<Position> positions;
+
+  const AllPositionsOverlayDialog({super.key, required this.positions});
+
+  @override
+  State<AllPositionsOverlayDialog> createState() => _AllPositionsOverlayDialogState();
+}
+
+class _AllPositionsOverlayDialogState extends State<AllPositionsOverlayDialog> {
+  @override
+  void initState() {
+    super.initState();
+    _showOverlay();
+  }
+
+  Future<void> _showOverlay() async {
+    try {
+      // 初始化屏幕服务
+      ScreenService.initialize();
+
+      // 转换位置数据
+      final markers = widget.positions.map((p) => PositionMarker(
+        x: p.x,
+        y: p.y,
+        name: p.name,
+      )).toList();
+
+      // 显示平台覆盖层
+      await ScreenService.showOverlay(markers);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('显示覆盖层失败: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _hideOverlay() async {
+    try {
+      await ScreenService.hideOverlay();
+    } catch (e) {
+      // 忽略隐藏失败
+    }
+  }
+
+  @override
+  void dispose() {
+    _hideOverlay();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black.withOpacity(0.3),
+      child: Center(
+        child: _ControlPanel(
+          positionCount: widget.positions.length,
+          onClose: () async {
+            await _hideOverlay();
+            if (mounted) Navigator.pop(context);
+          },
+        ),
+      ),
+    );
+  }
+}
+
+// 控制面板
+class _ControlPanel extends StatelessWidget {
+  final int positionCount;
+  final VoidCallback onClose;
+
+  const _ControlPanel({
+    required this.positionCount,
+    required this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.location_on, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                '位置标记预览',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '共 $positionCount 个位置',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+          const Divider(),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(Icons.info_outline, size: 16, color: Colors.grey[600]),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  '位置在实际屏幕坐标处显示',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.grey[600],
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: onClose,
+              icon: const Icon(Icons.close, size: 18),
+              label: const Text('关闭'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
