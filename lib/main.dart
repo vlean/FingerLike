@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/clicker_state.dart';
 import 'providers/settings_provider.dart';
+import 'providers/position_provider.dart';
+import 'providers/http_server_provider.dart';
 import 'widgets/main_tab_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/app_localizations.dart';
@@ -19,11 +21,19 @@ void main() async {
   final clickerState = ClickerState(settingsProvider);
   await clickerState.loadTaskRecords();
 
+  final positionProvider = PositionProvider();
+  await positionProvider.loadPositions();
+
+  final httpServerProvider = HttpServerProvider();
+  await httpServerProvider.initializeSettings();
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: settingsProvider),
         ChangeNotifierProvider.value(value: clickerState),
+        ChangeNotifierProvider.value(value: positionProvider),
+        ChangeNotifierProvider.value(value: httpServerProvider),
       ],
       child: const FingerLike(),
     ),

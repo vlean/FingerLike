@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/clicker_state.dart';
 import '../providers/settings_provider.dart';
+import '../providers/http_server_provider.dart';
+import '../providers/position_provider.dart';
 import '../l10n/app_localizations.dart';
 import 'dart:io' show Platform;
 import '../constants/clicker_enums.dart';
@@ -18,6 +20,140 @@ class SettingsPanel extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16.0),
       children: [
+        // HTTP 服务设置卡片
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      l10n.get('httpService') ?? 'HTTP 服务',
+                      style: const TextStyle(fontSize: 18),
+                    ),
+                    Consumer<HttpServerProvider>(
+                      builder: (context, httpProvider, child) {
+                        return Switch(
+                          value: httpProvider.isServerRunning,
+                          onChanged: (value) async {
+                            final positionProvider =
+                                Provider.of<PositionProvider>(
+                              context,
+                              listen: false,
+                            );
+                            await httpProvider.toggleServer(positionProvider);
+                          },
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Consumer<HttpServerProvider>(
+                  builder: (context, httpProvider, child) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              '${l10n.get('serverPort') ?? '端口'}: ',
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                            const SizedBox(width: 8),
+                            SizedBox(
+                              width: 100,
+                              child: TextField(
+                                keyboardType: TextInputType.number,
+                                initialValue: httpProvider.port.toString(),
+                                enabled: !httpProvider.isServerRunning,
+                                decoration: InputDecoration(
+                                  border: const OutlineInputBorder(),
+                                  isDense: true,
+                                  contentPadding:
+                                      const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 8,
+                                  ),
+                                ),
+                                onChanged: (value) {
+                                  final port = int.tryParse(value);
+                                  if (port != null) {
+                                    httpProvider.setPort(port);
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        if (httpProvider.isServerRunning) ...[
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .primaryColor
+                                  .withAlpha((0.1 * 255).round()),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.check_circle, size: 16),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    '${httpProvider.getServerUrl()}',
+                                    style: const TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.content_copy, size: 16),
+                                  onPressed: () {
+                                    // TODO: 实现复制到剪贴板
+                                  },
+                                  tooltip: '复制',
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          TextButton.icon(
+                            onPressed: () => _showApiDocumentation(
+                              context,
+                              httpProvider,
+                            ),
+                            icon: const Icon(Icons.code),
+                            label: Text(l10n.get('apiDocumentation') ?? 'API 文档'),
+                          ),
+                        ],
+                        if (httpProvider.error != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              httpProvider.error!,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.error,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -344,6 +480,38 @@ class SettingsPanel extends StatelessWidget {
               ),
             );
           }).toList(),
+    );
+  }
+
+  void _showApiDocumentation(
+    BuildContext context,
+    HttpServerProvider httpProvider,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.get('apiDocumentation') ?? 'API 文档'),
+        content: SizedBox(
+          width: 600,
+          height: 500,
+          child: SingleChildScrollView(
+            child: SelectableText(
+              httpProvider.getApiDocumentation(),
+              style: const TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.get('close') ?? '关闭'),
+          ),
+        ],
+      ),
     );
   }
 }

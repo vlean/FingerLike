@@ -5,6 +5,7 @@ import 'click_control_panel.dart';
 import 'records_panel.dart';
 import 'settings_panel.dart';
 import 'about_panel.dart';
+import 'positions_panel.dart';
 
 class MainTabScreen extends StatefulWidget {
   const MainTabScreen({super.key});
@@ -19,6 +20,7 @@ class _MainTabScreenState extends State<MainTabScreen> {
   static const List<Widget> _widgetOptions = <Widget>[
     ClickControlPanel(),
     RecordsPanel(),
+    PositionsPanel(),
     SettingsPanel(),
     AboutPanel(),
   ];
@@ -113,8 +115,9 @@ class _MainTabScreenState extends State<MainTabScreen> {
                       children: [
                         _buildTab(0, l10n.get('home')),
                         _buildTab(1, l10n.get('history')),
-                        _buildTab(2, l10n.get('settings')),
-                        _buildTab(3, l10n.get('about')),
+                        _buildTab(2, l10n.get('positions')),
+                        _buildTab(3, l10n.get('settings')),
+                        _buildTab(4, l10n.get('about')),
                       ],
                     ),
                   ),
@@ -139,8 +142,9 @@ class _MainTabScreenState extends State<MainTabScreen> {
                   children: [
                     _buildTab(0, l10n.get('home')),
                     _buildTab(1, l10n.get('history')),
-                    _buildTab(2, l10n.get('settings')),
-                    _buildTab(3, l10n.get('about')),
+                    _buildTab(2, l10n.get('positions')),
+                    _buildTab(3, l10n.get('settings')),
+                    _buildTab(4, l10n.get('about')),
                   ],
                 ),
               )
@@ -163,9 +167,12 @@ class _MainTabScreenState extends State<MainTabScreen> {
         icon = Icons.history;
         break;
       case 2:
-        icon = Icons.settings;
+        icon = Icons.location_on;
         break;
       case 3:
+        icon = Icons.settings;
+        break;
+      case 4:
         icon = Icons.info_outline;
         break;
       default:
