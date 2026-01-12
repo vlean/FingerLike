@@ -31,7 +31,7 @@ class SettingsPanel extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      l10n.get('httpService') ?? 'HTTP 服务',
+                      l10n.get('httpService'),
                       style: const TextStyle(fontSize: 18),
                     ),
                     Consumer<HttpServerProvider>(
@@ -54,21 +54,24 @@ class SettingsPanel extends StatelessWidget {
                 const SizedBox(height: 16),
                 Consumer<HttpServerProvider>(
                   builder: (context, httpProvider, child) {
+                    final portController = TextEditingController(
+                      text: httpProvider.port.toString(),
+                    );
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
                             Text(
-                              '${l10n.get('serverPort') ?? '端口'}: ',
+                              '${l10n.get('serverPort')}: ',
                               style: const TextStyle(fontSize: 14),
                             ),
                             const SizedBox(width: 8),
                             SizedBox(
                               width: 100,
                               child: TextField(
+                                controller: portController,
                                 keyboardType: TextInputType.number,
-                                initialValue: httpProvider.port.toString(),
                                 enabled: !httpProvider.isServerRunning,
                                 decoration: InputDecoration(
                                   border: const OutlineInputBorder(),
@@ -131,7 +134,7 @@ class SettingsPanel extends StatelessWidget {
                               httpProvider,
                             ),
                             icon: const Icon(Icons.code),
-                            label: Text(l10n.get('apiDocumentation') ?? 'API 文档'),
+                            label: Text(l10n.get('apiDocumentation')),
                           ),
                         ],
                         if (httpProvider.error != null)
@@ -491,7 +494,7 @@ class SettingsPanel extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.get('apiDocumentation') ?? 'API 文档'),
+        title: Text(l10n.get('apiDocumentation')),
         content: SizedBox(
           width: 600,
           height: 500,
@@ -508,7 +511,7 @@ class SettingsPanel extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(l10n.get('close') ?? '关闭'),
+            child: Text(l10n.get('close')),
           ),
         ],
       ),

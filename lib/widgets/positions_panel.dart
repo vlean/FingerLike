@@ -37,7 +37,7 @@ class _PositionsPanelState extends State<PositionsPanel> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                l10n.get('positionManagement') ?? '位置管理',
+                l10n.get('positionManagement'),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               Row(
@@ -45,7 +45,7 @@ class _PositionsPanelState extends State<PositionsPanel> {
                   ElevatedButton.icon(
                     onPressed: () => _showAddPositionDialog(context),
                     icon: const Icon(Icons.add),
-                    label: Text(l10n.get('addPosition') ?? '添加位置'),
+                    label: Text(l10n.get('addPosition')),
                   ),
                 ],
               ),
@@ -87,7 +87,7 @@ class _PositionsPanelState extends State<PositionsPanel> {
               ? const Center(child: CircularProgressIndicator())
               : provider.positions.isEmpty
                   ? Center(
-                      child: Text(l10n.get('noPositions') ?? '暂无位置'),
+                      child: Text(l10n.get('noPositions')),
                     )
                   : ListView.builder(
                       padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
@@ -133,14 +133,14 @@ class _PositionsPanelState extends State<PositionsPanel> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.get('confirmDelete') ?? '确认删除'),
+        title: Text(l10n.get('confirmDelete')),
         content: Text(
-          '${l10n.get('deletePositionConfirm') ?? '确定要删除位置"} "${position.name}" 吗？',
+          "${l10n.get('deletePositionConfirm')} \"${position.name}\" 吗？",
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(l10n.get('cancel') ?? '取消'),
+            child: Text(l10n.get('cancel')),
           ),
           TextButton(
             onPressed: () {
@@ -149,7 +149,7 @@ class _PositionsPanelState extends State<PositionsPanel> {
               Navigator.pop(context);
             },
             child: Text(
-              l10n.get('delete') ?? '删除',
+              l10n.get('delete'),
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           ),
@@ -339,8 +339,8 @@ class _PositionEditDialogState extends State<PositionEditDialog> {
         SnackBar(
           content: Text(
             widget.position == null
-                ? (l10n.get('positionAdded') ?? '位置已添加')
-                : (l10n.get('positionUpdated') ?? '位置已更新'),
+                ? l10n.get('positionAdded')
+                : l10n.get('positionUpdated'),
           ),
         ),
       );
@@ -350,13 +350,12 @@ class _PositionEditDialogState extends State<PositionEditDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final provider = Provider.of<PositionProvider>(context);
 
     return AlertDialog(
       title: Text(
         widget.position == null
-            ? (l10n.get('addPosition') ?? '添加位置')
-            : (l10n.get('editPosition') ?? '编辑位置'),
+            ? l10n.get('addPosition')
+            : l10n.get('editPosition'),
       ),
       content: SingleChildScrollView(
         child: Form(
@@ -368,13 +367,13 @@ class _PositionEditDialogState extends State<PositionEditDialog> {
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
-                  labelText: l10n.get('positionName') ?? '位置名称',
+                  labelText: l10n.get('positionName'),
                   hintText: '例如：登录按钮',
                   border: const OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return l10n.get('enterPositionName') ?? '请输入位置名称';
+                    return l10n.get('enterPositionName');
                   }
                   return null;
                 },
@@ -383,13 +382,13 @@ class _PositionEditDialogState extends State<PositionEditDialog> {
               TextFormField(
                 controller: _aliasController,
                 decoration: InputDecoration(
-                  labelText: l10n.get('positionAlias') ?? '别名',
+                  labelText: l10n.get('positionAlias'),
                   hintText: '例如：login',
                   border: const OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return l10n.get('enterPositionAlias') ?? '请输入别名';
+                    return l10n.get('enterPositionAlias');
                   }
                   return null;
                 },
@@ -440,7 +439,7 @@ class _PositionEditDialogState extends State<PositionEditDialog> {
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Tooltip(
-                        message: l10n.get('getCurrentPosition') ?? '获取当前位置',
+                        message: l10n.get('getCurrentPosition'),
                         child: IconButton(
                           icon: const Icon(Icons.my_location),
                           onPressed: _pickCurrentPosition,
@@ -456,7 +455,7 @@ class _PositionEditDialogState extends State<PositionEditDialog> {
       actions: [
         TextButton(
           onPressed: _isLoading ? null : () => Navigator.pop(context),
-          child: Text(l10n.get('cancel') ?? '取消'),
+          child: Text(l10n.get('cancel')),
         ),
         ElevatedButton(
           onPressed: _isLoading ? null : _savePosition,
@@ -466,7 +465,7 @@ class _PositionEditDialogState extends State<PositionEditDialog> {
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : Text(l10n.get('save') ?? '保存'),
+              : Text(l10n.get('save')),
         ),
       ],
     );
@@ -539,7 +538,7 @@ class _PositionPreviewDialogState extends State<PositionPreviewDialog> {
                     );
                   },
                   icon: const Icon(Icons.edit),
-                  label: Text(l10n.get('editPosition') ?? '编辑位置'),
+                  label: Text(l10n.get('editPosition')),
                 ),
               ],
             ),

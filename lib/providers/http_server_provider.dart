@@ -20,7 +20,6 @@ class HttpServerProvider with ChangeNotifier {
   // 默认端口
   static const int _defaultPort = 8080;
   static const String _prefPortKey = 'http_server_port';
-  static const String _prefAutoStartKey = 'http_server_auto_start';
 
   /// 初始化设置
   Future<void> initializeSettings() async {
