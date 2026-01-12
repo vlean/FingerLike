@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/clicker_state.dart';
+import '../providers/position_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../services/mouse_service.dart';
 import '../services/sayings_service.dart';
@@ -76,6 +77,8 @@ class _ClickControlPanelState extends State<ClickControlPanel> {
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                           const SizedBox(height: 24),
+                          _buildPositionSelector(state, l10n),
+                          const SizedBox(height: 16),
                           Row(
                             children: [
                               _buildCountInput(l10n),
@@ -399,6 +402,148 @@ class _ClickControlPanelState extends State<ClickControlPanel> {
           }
           return null;
         },
+      ),
+    );
+  }
+
+  Widget _buildPositionSelector(ClickerState state, AppLocalizations l10n) {
+    return Consumer<PositionProvider>(
+      builder: (context, positionProvider, child) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.location_on, size: 18, color: Theme.of(context).primaryColor),
+                const SizedBox(width: 8),
+                Text(
+                  '点击位置',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: () => _showPositionSelectionDialog(context, state, positionProvider),
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: state.selectedPosition != null
+                        ? Theme.of(context).primaryColor
+                        : Colors.grey,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      state.selectedPosition != null ? Icons.check_circle : Icons.radio_button_unchecked,
+                      color: state.selectedPosition != null
+                          ? Theme.of(context).primaryColor
+                          : Colors.grey,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        state.selectedPosition != null
+                            ? '${state.selectedPosition!.name} (${state.selectedPosition!.x}, ${state.selectedPosition!.y})'
+                            : '使用鼠标当前位置',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: state.selectedPosition != null
+                              ? Theme.of(context).primaryColor
+                              : Colors.grey[600],
+                        ),
+                      ),
+                    ),
+                    if (state.selectedPosition != null)
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 18),
+                        onPressed: () {
+                          state.clearSelectedPosition();
+                        },
+                        tooltip: '清除选择',
+                      ),
+                    const Icon(Icons.arrow_drop_down),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showPositionSelectionDialog(
+    BuildContext context,
+    ClickerState state,
+    PositionProvider positionProvider,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('选择点击位置'),
+        content: SizedBox(
+          width: 400,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 使用鼠标当前位置选项
+              ListTile(
+                leading: Icon(
+                  state.selectedPosition == null
+                      ? Icons.check_circle
+                      : Icons.radio_button_unchecked,
+                  color: state.selectedPosition == null
+                      ? Theme.of(context).primaryColor
+                      : Colors.grey,
+                ),
+                title: const Text('使用鼠标当前位置'),
+                subtitle: const Text('将在倒计时后使用鼠标位置进行点击'),
+                onTap: () {
+                  state.clearSelectedPosition();
+                  Navigator.pop(context);
+                },
+              ),
+              const Divider(),
+              // 位置列表
+              const Text('已保存的位置', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              if (positionProvider.positions.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text('暂无保存的位置'),
+                )
+              else
+                ...positionProvider.positions.map((position) {
+                  final isSelected = state.selectedPosition?.id == position.id;
+                  return ListTile(
+                    leading: Icon(
+                      isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+                      color: isSelected
+                          ? Theme.of(context).primaryColor
+                          : Colors.grey,
+                    ),
+                    title: Text(position.name),
+                    subtitle: Text('别名: ${position.alias} • (${position.x}, ${position.y})'),
+                    onTap: () {
+                      state.setSelectedPosition(position);
+                      Navigator.pop(context);
+                    },
+                  );
+                }).toList(),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+        ],
       ),
     );
   }

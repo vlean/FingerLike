@@ -9,6 +9,7 @@ import 'mixins/records_state_mixin.dart';
 import '../constants/clicker_constants.dart';
 import '../services/mouse_service.dart';
 import '../constants/clicker_enums.dart';
+import '../models/position.dart';
 
 class ClickerState with ChangeNotifier, RecordsStateMixin {
   final TextEditingController _controller = TextEditingController();
@@ -21,6 +22,7 @@ class ClickerState with ChangeNotifier, RecordsStateMixin {
   TaskStatus _taskStatus = TaskStatus.idle;
   Point? _clickPosition;
   String? _error;
+  Position? _selectedPosition;
 
   final SettingsProvider _settingsProvider;
 
@@ -41,6 +43,7 @@ class ClickerState with ChangeNotifier, RecordsStateMixin {
   int get progress => _progress;
   Point? get clickPosition => _clickPosition;
   String? get error => _error;
+  Position? get selectedPosition => _selectedPosition;
 
   void cancelTask() {
     if (!isRunning) return;
@@ -77,6 +80,19 @@ class ClickerState with ChangeNotifier, RecordsStateMixin {
     _progress = 0;
     _taskStatus = TaskStatus.idle;
     _error = null;
+    _clickPosition = null;
+    notifyListeners();
+  }
+
+  // 设置选中的位置
+  void setSelectedPosition(Position? position) {
+    _selectedPosition = position;
+    notifyListeners();
+  }
+
+  // 清除选中的位置
+  void clearSelectedPosition() {
+    _selectedPosition = null;
     notifyListeners();
   }
 
@@ -222,34 +238,60 @@ class ClickerState with ChangeNotifier, RecordsStateMixin {
     Point? finalClickPosition;
 
     try {
-      if (Platform.isAndroid || Platform.isIOS) {
-        final result = await MouseService.selectCoordinates();
-        if (result['confirmed'] != true) {
-          _resetState();
-          return;
-        }
-        finalClickPosition = result['position'];
+      // 如果选中了位置，直接使用该位置
+      if (_selectedPosition != null) {
+        finalClickPosition = Point(
+          _selectedPosition!.x.toDouble(),
+          _selectedPosition!.y.toDouble(),
+        );
         _clickPosition = finalClickPosition;
         notifyListeners();
-      }
 
-      final countdownSuccessful = await _runCountdown();
-      if (!countdownSuccessful) {
-        if (_taskStatus != TaskStatus.error) {
-          _resetState();
+        final countdownSuccessful = await _runCountdown();
+        if (!countdownSuccessful) {
+          if (_taskStatus != TaskStatus.error) {
+            _resetState();
+          }
+          return;
         }
-        return;
-      }
-
-      // 获取最终点击位置 (桌面平台)
-      if (!Platform.isAndroid && !Platform.isIOS) {
-        try {
-          finalClickPosition = await MouseService.getCurrentPosition();
+      } else {
+        // 没有选中位置，使用现有逻辑
+        if (Platform.isAndroid || Platform.isIOS) {
+          final result = await MouseService.selectCoordinates();
+          if (result['confirmed'] != true) {
+            _resetState();
+            return;
+          }
+          finalClickPosition = result['position'];
           _clickPosition = finalClickPosition;
           notifyListeners();
-        } on ClickException catch (e) {
-          _handleClickException(e, totalClicks);
-          return;
+
+          final countdownSuccessful = await _runCountdown();
+          if (!countdownSuccessful) {
+            if (_taskStatus != TaskStatus.error) {
+              _resetState();
+            }
+            return;
+          }
+        } else {
+          // 桌面平台：先倒计时，再获取鼠标位置
+          final countdownSuccessful = await _runCountdown();
+          if (!countdownSuccessful) {
+            if (_taskStatus != TaskStatus.error) {
+              _resetState();
+            }
+            return;
+          }
+
+          // 获取最终点击位置 (桌面平台)
+          try {
+            finalClickPosition = await MouseService.getCurrentPosition();
+            _clickPosition = finalClickPosition;
+            notifyListeners();
+          } on ClickException catch (e) {
+            _handleClickException(e, totalClicks);
+            return;
+          }
         }
       }
 
